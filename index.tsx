@@ -67,10 +67,12 @@ ReactDOM.render(
     <ambientLight color={[1, 1, 1]} position={[ 0, 0, -5]} />
     <pointLight castShadow color={[1,0,0]} position={[0, 10, 0]} />
     <Physics>
-      <Character x={0.2} y={1.5} />
-      <Platform x={0.2} y={0} />
-      <Platform x={1.3} y={.5} />
-      <Platform x={2.5} y={1} />
+      <Character x={0} y={1.5} />
+      <Platform x={0} y={0} />
+      <Platform x={1.5} y={.5} />
+      <Platform x={3} y={1} />
+      <Platform x={4.5} y={.5} />
+      <Platform x={6} y={0} />
     </Physics>
   </Canvas>,
   document.getElementById('root'),
