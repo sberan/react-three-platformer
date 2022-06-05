@@ -3,8 +3,7 @@ import React, { useEffect } from "react"
 import ReactDOM from "react-dom"
 import { Canvas, useThree } from '@react-three/fiber'
 import { Physics, Triplet, useBox, useSphere } from '@react-three/cannon'
-import { distinctUntilChanged, filter, fromEvent, groupBy, interval, map, merge, mergeAll, mergeMap, takeUntil } from 'rxjs'
-
+import { filter, fromEvent, interval, map, merge, mergeMap, startWith, takeUntil } from 'rxjs'
 
 const Platform = (props: {x: number, y: number}) => {
   const size: Triplet = [1, .1, 1]
@@ -45,24 +44,23 @@ const Character = (props: {x: number, y: number}) => {
   }
 
   useEffect(() => {
-    const keydowns = fromEvent<KeyboardEvent>(document, 'keydown').pipe(map(({ code }) => ({ type: 'down', code })))
-    const keyups = fromEvent<KeyboardEvent>(document, 'keyup').pipe(map(({ code }) => ({ type: 'up', code })))
+    const keydowns = fromEvent<KeyboardEvent>(document, 'keydown')
+    const keyups = fromEvent<KeyboardEvent>(document, 'keyup')
     
-    const uniqueEvents = merge(keydowns, keyups)
+    const keyEvents = merge(keydowns)
       .pipe(
-        groupBy(x => x.code),
-        map(group => group.pipe(
-          distinctUntilChanged((x, y) => x === y, x => x.type)),
-        ),
-        mergeAll(),
+        filter(x => !x.repeat),
+        mergeMap(e => {
+          const keyReleased = keyups.pipe(filter(x => x.code === e.code))
+          return interval(100).pipe(
+            startWith(0),
+            takeUntil(keyReleased),
+            map(() => e)
+          )
+        })
       )
 
-    const subscription = uniqueEvents.pipe(filter(e => e.type === 'down'))
-      .pipe(
-        mergeMap(e => merge([e], interval(100)).pipe(
-          map(() => e),
-          takeUntil( uniqueEvents.pipe(filter(next => next.code === e.code && next.type === 'up'))))
-        ))
+    const subscription = keyEvents
       .subscribe(x => {
         if (x.code === 'ArrowUp') {
           thrust({ y: 5 })
