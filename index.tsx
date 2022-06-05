@@ -3,7 +3,8 @@ import React, { useEffect } from "react"
 import ReactDOM from "react-dom"
 import { Canvas, useThree } from '@react-three/fiber'
 import { Physics, Triplet, useBox, useSphere } from '@react-three/cannon'
-import { filter, fromEvent, interval, map, merge, mergeMap, startWith, takeUntil } from 'rxjs'
+import useRepeatingKey from './use-repeating-key'
+
 
 const Platform = (props: {x: number, y: number}) => {
   const size: Triplet = [1, .1, 1]
@@ -43,38 +44,17 @@ const Character = (props: {x: number, y: number}) => {
     })
   }
 
-  useEffect(() => {
-    const keydowns = fromEvent<KeyboardEvent>(document, 'keydown')
-    const keyups = fromEvent<KeyboardEvent>(document, 'keyup')
-    
-    const keyEvents = merge(keydowns)
-      .pipe(
-        filter(x => !x.repeat),
-        mergeMap(e => {
-          const keyReleased = keyups.pipe(filter(x => x.code === e.code))
-          return interval(100).pipe(
-            startWith(0),
-            takeUntil(keyReleased),
-            map(() => e)
-          )
-        })
-      )
-
-    const subscription = keyEvents
-      .subscribe(x => {
-        if (x.code === 'ArrowUp') {
-          thrust({ y: 5 })
-        }
-        if (x.code === 'ArrowLeft') {
-          thrust({ x: -1 })
-        }
-        if (x.code === 'ArrowRight') {
-          thrust({ x: 1 })
-        }
-      })
-    
-    return subscription.unsubscribe
-  }, [])
+  useRepeatingKey(100, e => {
+    if (e.code === 'ArrowUp') {
+      thrust({ y: 5 })
+    }
+    if (e.code === 'ArrowLeft') {
+      thrust({ x: -1 })
+    }
+    if (e.code === 'ArrowRight') {
+      thrust({ x: 1 })
+    }
+  })
   
   return <mesh ref={ref as any} castShadow>
     <sphereGeometry args={[size]}/>
